@@ -7,7 +7,7 @@ import numpy as np
 # into sections of (height,width) and returns one numpy array 
 # containing the image segments, one array of the same length 
 # that has a value of 1 if there is an anomaly in the image segment
-# at that index and zero otherwise, and the amount of non-zero rows 
+# at that index and zero otherwise, and the amount of rows 
 # and columns in the image array.
 
 def imgseg(img, mask, height, width, channels, stride):
@@ -59,7 +59,6 @@ def imgseg(img, mask, height, width, channels, stride):
                 
         ycounter += 1
         xcounter = 0
-    print('tots',xtot,ytot)
-    print(np.shape(imgparts[:xtot,:ytot]))
+
     return imgparts[:xtot,:ytot], contains_anomaly[:xtot,:ytot], xtot, ytot
 
