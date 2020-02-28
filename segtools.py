@@ -111,13 +111,13 @@ def imgseg(img, mask, height, width, channels, stride):
 #                  but will always have one channel
 
     
-def anom_scores(model_type, model, image, seg_w, seg_h, stride):
+def anom_scores(model_type, model, image, seg_w, seg_h, channels, stride):
     
     # Create empty mask to pass to imgseg because we do not yet know
     # where the anomalies are
     mask = np.zeros_like(image)
     # Run imgseg on image to divide it into segments
-    segments, _, _, _ = imgseg(image, mask, seg_w, seg_h, stride)
+    segments, _, _, _ = imgseg(image, mask, seg_w, seg_h, channels, stride)
     
     # Find how many segments are on each row and column
     rows, cols = segments.shape[:2]
@@ -128,24 +128,31 @@ def anom_scores(model_type, model, image, seg_w, seg_h, stride):
     for i in range(rows):
         print(f'Row {i+1}/{rows}')
         for j in range(cols):
-            
-            # Use model to predict wether there is an anomaly in current segment
-            pred = model.predict(segments[i,j][np.newaxis])
+        
+            if model_type == 'avg':
                 
-            # Add the prediction to the anomaly map. The score used depends on the 
-            # classifier model
-            if model_type == 'cnn':
-                # 'cnn': integer score, 1 for anomaly, 0 otherwise
-                anomaly_map[i*stride:i*stride+seg_w,j*stride:j*stride+seg_h] += pred
-            
-            elif model_type == 'autoencoder':
-                # 'autoencoder': float score, reconstruction error
-                anomaly_map[i*stride:i*stride+seg_w,j*stride:j*stride+seg_h] += np.sum((pred-segments[i,j])**2)
-            # If the model_type does not match any of the known types,
-            # print error message and return empty map
+                pred = np.average(segments[i,j])
+                anomaly_map[j*stride:j*stride+seg_h,i*stride:i*stride+seg_w] += np.sum((pred-segments[i,j])**2)
+                
             else:
-                print('Model type not recognized! Use \'cnn\' or \'autoencoder\' ')
-                return anomaly_map
+            
+                # Use model to predict wether there is an anomaly in current segment
+                pred = model.predict(segments[i,j][np.newaxis])
+                    
+                # Add the prediction to the anomaly map. The score used depends on the 
+                # classifier model
+                if model_type == 'cnn':
+                    # 'cnn': integer score, 1 for anomaly, 0 otherwise
+                    anomaly_map[j*stride:j*stride+seg_h,i*stride:i*stride+seg_w] += pred
+                
+                elif model_type == 'autoencoder':
+                    # 'autoencoder': float score, reconstruction error
+                    anomaly_map[j*stride:j*stride+seg_h,i*stride:i*stride+seg_w] += np.sum((pred-segments[i,j])**2)
+                # If the model_type does not match any of the known types,
+                # print error message and return empty map
+                else:
+                    print('Model type not recognized! Use \'cnn\' or \'autoencoder\' ')
+                    return anomaly_map
     # Return the map
     return anomaly_map
 
