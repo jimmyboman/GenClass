@@ -109,8 +109,8 @@ def make_generator(x_train, y_train, batch_size,
 #
 # Input: 
 #   - model: Compiled model to be trained
-#   - train_generator: ImageDataGenerator for training data
-#   - val_generator: ImageDataGenerator for validation data
+#   - train_generator: ImageDataGenerator for training data (use make_generator)
+#   - val_generator: ImageDataGenerator for validation data (use make_generator)
 #   - epochs: Amount of epochs to train the model for
 #
 # Output:
