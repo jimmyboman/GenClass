@@ -36,9 +36,7 @@ def imgseg(img, mask, height, width, channels, stride):
     
     # Get image dimensions
     im_h, im_w = img.shape[:2]
-    #img = img[:-((im_w-width))%stride,:-((im_h-height))%stride]
-    #img = img[:-2,:]
-    #im_h, im_w = img.shape[:2]
+
     # Determine the locations of the image segments
     x = range(0,im_w-width,stride)
     y = range(0,im_h-height,stride)
@@ -103,7 +101,6 @@ def imgseg(img, mask, height, width, channels, stride):
 #   - seg_w: Width of the image segments, integer
 #   - seg_h: Height of the image segments, integer
 #   - stride: Distance to move between segments, integer
-#   - row_print: If True, will print a progress message for each row
 #
 # Output:
 #   - anomaly_map: Pixel-wise anomaly scores, numpy array
@@ -128,10 +125,17 @@ def anom_scores(model_type, model, image, seg_w, seg_h, channels, stride):
     
     for i in range(rows):
         for j in range(cols):
-            anomaly_map[j*stride:j*stride+seg_h,i*stride:i*stride+seg_w] += preds[i*cols+j] > 0
+            # Use binary prediction for CNN type, and reconstruction error for autoencoder, as anomaly score
+            if model_type == 'cnn':
+                # CNN returns negative number for non-anomaly, positive for anomaly. 
+                # This is converted into a binary score, 1 for anomaly and 0 for non-anomaly.
+                anomaly_map[j*stride:j*stride+seg_h,i*stride:i*stride+seg_w] += preds[i*cols+j] > 0
+            elif model_type == 'autoencoder':
+                anomaly_map[j*stride:j*stride+seg_h,i*stride:i*stride+seg_w] += np.sum((preds[i*cols+j] - segments[i*cols+j])**2)
+                
     # Return the map
     return anomaly_map
-
+    
 def anom_scores_partial(parts, model_type, model, image, seg_w, seg_h, channels, stride, row_print=False):
 
     w, h = image.shape[:2]
