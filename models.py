@@ -8,15 +8,15 @@ from tensorflow.keras.models import Model
 # for transfer learning. The model is based on the VGG19 network without
 # the top layer, and instead has a global average pooling layer and a 
 # dense layer for binary classification. Returns the compiled model.
-def binary_cnn(img_h,img_w,channels,learning_rate):
+def binary_cnn(img_h,img_w,channels,optimizer,loss,weights='imagenet'):
     
     IMG_SHAPE = (img_h,img_w,channels)
-    optimizer = tf.keras.optimizers.Adam(lr=learning_rate)
-    loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+    #optimizer = tf.keras.optimizers.Adam(lr=learning_rate)
+    #loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)
     
     base_model = tf.keras.applications.vgg19.VGG19(input_shape=IMG_SHAPE,
                                                             include_top=False,
-                                                            weights='imagenet')
+                                                            weights=weights)
                                                             
     base_model.trainable = False
     
@@ -34,11 +34,8 @@ def binary_cnn(img_h,img_w,channels,learning_rate):
 ##### Function: autoencoder
 # Takes input image dimensions and builds an autoencoder network.
 # Returns the compiled model.                  
-def autoencoder(img_h,img_w,channels):
-
-    optimizer = 'Adam'
-    loss = 'mse'
-    
+def autoencoder(img_h,img_w,channels,optimizer='Adam',loss='mse'):
+  
     input_img = Input(shape=(img_h, img_w, channels))  # adapt this if using `channels_first` image data format
     
     # encode
@@ -74,5 +71,24 @@ def autoencoder(img_h,img_w,channels):
     autoencoder.compile(optimizer=optimizer, loss=loss)
     
     return autoencoder
-	
+    
+def custom_cnn(img_h,img_w,channels,optimizer,loss):
+    
+    IMG_SHAPE = (img_h,img_w,channels)
+    
+    model = models.Sequential()
+    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=IMG_SHAPE))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(64, activation='relu'))
+    model.add(layers.Dense(1))
+    
+    model.compile(optimizer=optimizer,
+                  loss=loss,
+                  metrics=['accuracy'])
+                  
+    return model
     
