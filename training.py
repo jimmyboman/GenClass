@@ -93,7 +93,7 @@ def make_generator(x_train, y_train, batch_size,
         shear_range=shear_range
         )
 
-    generator = train_datagen.flow(
+    generator = datagen.flow(
         x_train,
         y_train,
         batch_size=batch_size
